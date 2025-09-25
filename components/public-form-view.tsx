@@ -42,16 +42,18 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const [availableItems, setAvailableItems] = useState<FormItem[]>([])
   const [respondentData, setRespondentData] = useState({
     customerName: "",
+    customerCNPJ: "",
+    orderAmount: 0,
+    giftNegotiated: "",
+    representativeName: "",
+    representativeEmail: "",
     customerEmail: "",
-    customerPhone: "",
-    sellerName: "",
-    saleAmount: 0,
     notes: "",
   })
 
   useEffect(() => {
-    if (respondentData.saleAmount > 0) {
-      const filtered = items.filter((item) => item.price <= respondentData.saleAmount && item.current_stock > 0)
+    if (respondentData.orderAmount > 0) {
+      const filtered = items.filter((item) => item.price <= respondentData.orderAmount && item.current_stock > 0)
       setAvailableItems(filtered)
 
       // Remove selected items that are no longer available
@@ -66,7 +68,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       setAvailableItems([])
       setSelectedItems({})
     }
-  }, [respondentData.saleAmount, items])
+  }, [respondentData.orderAmount, items])
 
   const handleItemToggle = (itemId: string, checked: boolean) => {
     if (checked) {
@@ -102,20 +104,28 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       alert("Por favor, preencha o nome do cliente.")
       return
     }
+    if (!respondentData.customerCNPJ.trim()) {
+      alert("Por favor, preencha o CNPJ e/ou Grupo Econômico.")
+      return
+    }
+    if (respondentData.orderAmount <= 0) {
+      alert("Por favor, informe o valor do pedido negociado.")
+      return
+    }
+    if (!respondentData.giftNegotiated.trim()) {
+      alert("Por favor, informe qual brinde foi negociado.")
+      return
+    }
+    if (!respondentData.representativeName.trim()) {
+      alert("Por favor, preencha o nome do representante responsável.")
+      return
+    }
+    if (!respondentData.representativeEmail.trim()) {
+      alert("Por favor, preencha o email do representante responsável.")
+      return
+    }
     if (!respondentData.customerEmail.trim()) {
       alert("Por favor, preencha o email do cliente.")
-      return
-    }
-    if (!respondentData.customerPhone.trim()) {
-      alert("Por favor, preencha o telefone do cliente.")
-      return
-    }
-    if (!respondentData.sellerName.trim()) {
-      alert("Por favor, preencha o nome do vendedor.")
-      return
-    }
-    if (respondentData.saleAmount <= 0) {
-      alert("Por favor, informe o valor da venda.")
       return
     }
     if (Object.keys(selectedItems).length === 0) {
@@ -124,9 +134,9 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     }
 
     const totalValue = getTotalValue()
-    if (totalValue > respondentData.saleAmount) {
+    if (totalValue > respondentData.orderAmount) {
       alert(
-        `O valor total dos itens selecionados (R$ ${totalValue.toFixed(2)}) excede o valor da venda (R$ ${respondentData.saleAmount.toFixed(2)}).`,
+        `O valor total dos itens selecionados (R$ ${totalValue.toFixed(2)}) excede o valor do pedido negociado (R$ ${respondentData.orderAmount.toFixed(2)}).`,
       )
       return
     }
@@ -141,10 +151,12 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         .insert({
           form_id: form.id,
           customer_name: respondentData.customerName,
+          customer_cnpj: respondentData.customerCNPJ,
+          order_amount: respondentData.orderAmount,
+          gift_negotiated: respondentData.giftNegotiated,
+          representative_name: respondentData.representativeName,
+          representative_email: respondentData.representativeEmail,
           customer_email: respondentData.customerEmail,
-          customer_phone: respondentData.customerPhone,
-          seller_name: respondentData.sellerName,
-          sale_amount: respondentData.saleAmount,
           notes: respondentData.notes || null,
         })
         .select()
@@ -185,15 +197,16 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         </CardHeader>
       </Card>
 
+      {/* Card de Informações da Negociação */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Informações da Venda *</CardTitle>
+          <CardTitle className="text-lg">Informações da Negociação *</CardTitle>
           <CardDescription>Todos os campos são obrigatórios</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="customerName">Nome do Cliente *</Label>
+              <Label htmlFor="customerName">1. Informe o nome do cliente *</Label>
               <Input
                 id="customerName"
                 value={respondentData.customerName}
@@ -203,57 +216,70 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
               />
             </div>
             <div>
-              <Label htmlFor="customerEmail">Email do Cliente *</Label>
+              <Label htmlFor="customerCNPJ">2. Informe o CNPJ e/ou Grupo Econômico *</Label>
+              <Input
+                id="customerCNPJ"
+                value={respondentData.customerCNPJ}
+                onChange={(e) => setRespondentData({ ...respondentData, customerCNPJ: e.target.value })}
+                placeholder="Inclua todos os CNPJs envolvidos na negociação"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="orderAmount">3. Informe o valor do pedido negociado com o cliente *</Label>
+              <Input
+                id="orderAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={respondentData.orderAmount}
+                onChange={(e) =>
+                  setRespondentData({ ...respondentData, orderAmount: Number.parseFloat(e.target.value) || 0 })
+                }
+                placeholder="Valor negociado"
+                required
+              />
+              {respondentData.orderAmount > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Apenas itens com valor mínimo igual ou inferior a R$ {respondentData.orderAmount.toFixed(2)} estarão disponíveis
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="representativeName">4. Informe o nome do representante responsável pelo cliente *</Label>
+              <Input
+                id="representativeName"
+                value={respondentData.representativeName}
+                onChange={(e) => setRespondentData({ ...respondentData, representativeName: e.target.value })}
+                placeholder="Nome do representante"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="representativeEmail">
+                5. Informe o email do representante responsável pelo cliente *
+              </Label>
+              <Input
+                id="representativeEmail"
+                type="email"
+                value={respondentData.representativeEmail}
+                onChange={(e) => setRespondentData({ ...respondentData, representativeEmail: e.target.value })}
+                placeholder="O representante será incluído no circuito de e-mails"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="customerEmail">
+                6. Informe o e-mail do cliente *
+              </Label>
               <Input
                 id="customerEmail"
                 type="email"
                 value={respondentData.customerEmail}
                 onChange={(e) => setRespondentData({ ...respondentData, customerEmail: e.target.value })}
-                placeholder="cliente@email.com"
+                placeholder="O cliente receberá o código de resgate do brinde"
                 required
               />
-            </div>
-            <div>
-              <Label htmlFor="customerPhone">Telefone do Cliente *</Label>
-              <Input
-                id="customerPhone"
-                type="tel"
-                value={respondentData.customerPhone}
-                onChange={(e) => setRespondentData({ ...respondentData, customerPhone: e.target.value })}
-                placeholder="(11) 99999-9999"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="sellerName">Nome do Vendedor *</Label>
-              <Input
-                id="sellerName"
-                value={respondentData.sellerName}
-                onChange={(e) => setRespondentData({ ...respondentData, sellerName: e.target.value })}
-                placeholder="Nome do vendedor"
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="saleAmount">Valor da Venda (R$) *</Label>
-              <Input
-                id="saleAmount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={respondentData.saleAmount}
-                onChange={(e) =>
-                  setRespondentData({ ...respondentData, saleAmount: Number.parseFloat(e.target.value) || 0 })
-                }
-                placeholder="0.00"
-                required
-              />
-              {respondentData.saleAmount > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Apenas itens com valor mínimo igual ou inferior a R$ {respondentData.saleAmount.toFixed(2)} estarão
-                  disponíveis
-                </p>
-              )}
             </div>
           </div>
           <div>
@@ -270,17 +296,19 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       </Card>
 
       {/* Items Selection */}
-      {respondentData.saleAmount > 0 && (
+      {respondentData.orderAmount > 0 && (
+        // ... Card de seleção de itens permanece igual ...
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Selecione os Itens</CardTitle>
             <CardDescription>
               {availableItems.length > 0
-                ? `${availableItems.length} item(ns) disponível(eis) para o valor de venda de R$ ${respondentData.saleAmount.toFixed(2)}`
+                ? `${availableItems.length} item(ns) disponível(eis) para o valor de venda de R$ ${respondentData.orderAmount.toFixed(2)}`
                 : "Nenhum item disponível para este valor de venda"}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* ...código de seleção de itens permanece igual... */}
             {availableItems.length === 0 ? (
               <div className="text-center py-8">
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -341,8 +369,8 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
                       <span className="text-lg font-bold">R$ {getTotalValue().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <span>Valor da venda:</span>
-                      <span>R$ {respondentData.saleAmount.toFixed(2)}</span>
+                      <span>Valor do pedido negociado:</span>
+                      <span>R$ {respondentData.orderAmount.toFixed(2)}</span>
                     </div>
                   </div>
                 )}
@@ -360,10 +388,12 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             isLoading ||
             Object.keys(selectedItems).length === 0 ||
             !respondentData.customerName ||
-            !respondentData.customerEmail ||
-            !respondentData.customerPhone ||
-            !respondentData.sellerName ||
-            respondentData.saleAmount <= 0
+            !respondentData.customerCNPJ ||
+            respondentData.orderAmount <= 0 ||
+            !respondentData.giftNegotiated ||
+            !respondentData.representativeName ||
+            !respondentData.representativeEmail ||
+            !respondentData.customerEmail
           }
           size="lg"
         >
