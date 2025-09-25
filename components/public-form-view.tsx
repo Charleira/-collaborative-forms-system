@@ -43,13 +43,35 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const [respondentData, setRespondentData] = useState({
     customerName: "",
     customerCNPJ: "",
+    customerPhone: "",
     orderAmount: 0,
-    giftNegotiated: "",
     representativeName: "",
     representativeEmail: "",
     customerEmail: "",
     notes: "",
   })
+
+  useEffect(() => {
+    console.log("[v0] PublicFormView component mounted/remounted")
+    console.log("[v0] Initial respondentData:", respondentData)
+  }, [])
+
+  const resetForm = () => {
+    console.log("[v0] Resetting form...")
+    setRespondentData({
+      customerName: "",
+      customerCNPJ: "",
+      customerPhone: "",
+      orderAmount: 0,
+      representativeName: "",
+      representativeEmail: "",
+      customerEmail: "",
+      notes: "",
+    })
+    setSelectedItems({})
+    setAvailableItems([])
+    console.log("[v0] Form reset completed")
+  }
 
   useEffect(() => {
     if (respondentData.orderAmount > 0) {
@@ -100,69 +122,99 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log("[v0] handleSubmit called")
+    console.log("[v0] Current respondentData:", respondentData)
+
     if (!respondentData.customerName.trim()) {
+      console.log("[v0] Validation failed: customerName empty")
       alert("Por favor, preencha o nome do cliente.")
       return
     }
     if (!respondentData.customerCNPJ.trim()) {
+      console.log("[v0] Validation failed: customerCNPJ empty")
       alert("Por favor, preencha o CNPJ e/ou Grupo Econômico.")
       return
     }
+    if (!respondentData.customerPhone.trim()) {
+      console.log("[v0] Validation failed: customerPhone empty")
+      alert("Por favor, preencha o telefone do cliente.")
+      return
+    }
     if (respondentData.orderAmount <= 0) {
+      console.log("[v0] Validation failed: orderAmount invalid")
       alert("Por favor, informe o valor do pedido negociado.")
       return
     }
-    if (!respondentData.giftNegotiated.trim()) {
-      alert("Por favor, informe qual brinde foi negociado.")
-      return
-    }
     if (!respondentData.representativeName.trim()) {
+      console.log("[v0] Validation failed: representativeName empty")
       alert("Por favor, preencha o nome do representante responsável.")
       return
     }
     if (!respondentData.representativeEmail.trim()) {
+      console.log("[v0] Validation failed: representativeEmail empty")
       alert("Por favor, preencha o email do representante responsável.")
       return
     }
     if (!respondentData.customerEmail.trim()) {
+      console.log("[v0] Validation failed: customerEmail empty")
       alert("Por favor, preencha o email do cliente.")
       return
     }
     if (Object.keys(selectedItems).length === 0) {
+      console.log("[v0] Validation failed: no items selected")
       alert("Por favor, selecione pelo menos um item.")
       return
     }
 
     const totalValue = getTotalValue()
     if (totalValue > respondentData.orderAmount) {
+      console.log("[v0] Validation failed: total value exceeds order amount")
       alert(
         `O valor total dos itens selecionados (R$ ${totalValue.toFixed(2)}) excede o valor do pedido negociado (R$ ${respondentData.orderAmount.toFixed(2)}).`,
       )
       return
     }
 
+    console.log("[v0] All validations passed, proceeding with submission")
     setIsLoading(true)
     const supabase = createClient()
 
     try {
+      const formData = {
+        form_id: form.id,
+        customer_name: respondentData.customerName.trim(),
+        cnpj_grupo_economico: respondentData.customerCNPJ.trim(),
+        customer_phone: respondentData.customerPhone.trim(),
+        sale_amount: respondentData.orderAmount,
+        representante_nome: respondentData.representativeName.trim(),
+        representante_email: respondentData.representativeEmail.trim(),
+        seller_name: respondentData.representativeName.trim(), // Always use representative name
+        customer_email: respondentData.customerEmail.trim(),
+        notes: respondentData.notes?.trim() || null,
+      }
+
+      console.log("[v0] Form data being sent:", formData)
+      console.log("[v0] Representative name:", formData.representante_nome)
+      console.log("[v0] Seller name (should be same as representative):", formData.seller_name)
+
+      if (!formData.seller_name || formData.seller_name.trim() === "") {
+        console.error("[v0] CRITICAL ERROR: seller_name is empty!")
+        throw new Error("Nome do representante não pode estar vazio")
+      }
+
       // Create form response
       const { data: response, error: responseError } = await supabase
         .from("form_responses")
-        .insert({
-          form_id: form.id,
-          customer_name: respondentData.customerName,
-          customer_cnpj: respondentData.customerCNPJ,
-          order_amount: respondentData.orderAmount,
-          gift_negotiated: respondentData.giftNegotiated,
-          representative_name: respondentData.representativeName,
-          representative_email: respondentData.representativeEmail,
-          customer_email: respondentData.customerEmail,
-          notes: respondentData.notes || null,
-        })
+        .insert(formData)
         .select()
         .single()
 
-      if (responseError) throw responseError
+      if (responseError) {
+        console.error("[v0] Database error:", responseError)
+        throw responseError
+      }
+
+      console.log("[v0] Form response created successfully:", response)
 
       // Create response items
       const responseItems = Object.entries(selectedItems).map(([itemId, quantity]) => ({
@@ -173,12 +225,20 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
       const { error: itemsError } = await supabase.from("response_items").insert(responseItems)
 
-      if (itemsError) throw itemsError
+      if (itemsError) {
+        console.error("[v0] Items error:", itemsError)
+        throw itemsError
+      }
 
+      console.log("[v0] Response items created successfully")
+
+      console.log("[v0] Navigating to success page...")
       router.push(`/form/${form.id}/success`)
     } catch (error) {
-      console.error("Erro ao enviar resposta:", error)
-      alert("Erro ao enviar resposta. Tente novamente.")
+      console.error("[v0] Error submitting form:", error)
+      alert(
+        `Erro ao enviar resposta: ${error instanceof Error ? error.message : "Erro desconhecido"}. Tente novamente.`,
+      )
     } finally {
       setIsLoading(false)
     }
@@ -225,8 +285,19 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
                 required
               />
             </div>
+            <div>
+              <Label htmlFor="customerPhone">3. Informe o telefone do cliente *</Label>
+              <Input
+                id="customerPhone"
+                type="tel"
+                value={respondentData.customerPhone}
+                onChange={(e) => setRespondentData({ ...respondentData, customerPhone: e.target.value })}
+                placeholder="Telefone para contato"
+                required
+              />
+            </div>
             <div className="md:col-span-2">
-              <Label htmlFor="orderAmount">3. Informe o valor do pedido negociado com o cliente *</Label>
+              <Label htmlFor="orderAmount">4. Informe o valor do pedido negociado com o cliente *</Label>
               <Input
                 id="orderAmount"
                 type="number"
@@ -241,12 +312,13 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
               />
               {respondentData.orderAmount > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Apenas itens com valor mínimo igual ou inferior a R$ {respondentData.orderAmount.toFixed(2)} estarão disponíveis
+                  Apenas itens com valor mínimo igual ou inferior a R$ {respondentData.orderAmount.toFixed(2)} estarão
+                  disponíveis
                 </p>
               )}
             </div>
             <div>
-              <Label htmlFor="representativeName">4. Informe o nome do representante responsável pelo cliente *</Label>
+              <Label htmlFor="representativeName">5. Informe o nome do representante responsável pelo cliente *</Label>
               <Input
                 id="representativeName"
                 value={respondentData.representativeName}
@@ -257,7 +329,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             </div>
             <div>
               <Label htmlFor="representativeEmail">
-                5. Informe o email do representante responsável pelo cliente *
+                6. Informe o email do representante responsável pelo cliente *
               </Label>
               <Input
                 id="representativeEmail"
@@ -269,9 +341,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
               />
             </div>
             <div className="md:col-span-2">
-              <Label htmlFor="customerEmail">
-                6. Informe o e-mail do cliente *
-              </Label>
+              <Label htmlFor="customerEmail">7. Informe o e-mail do cliente *</Label>
               <Input
                 id="customerEmail"
                 type="email"
@@ -297,7 +367,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
       {/* Items Selection */}
       {respondentData.orderAmount > 0 && (
-        // ... Card de seleção de itens permanece igual ...
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Selecione os Itens</CardTitle>
@@ -308,7 +377,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* ...código de seleção de itens permanece igual... */}
             {availableItems.length === 0 ? (
               <div className="text-center py-8">
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -389,8 +457,8 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             Object.keys(selectedItems).length === 0 ||
             !respondentData.customerName ||
             !respondentData.customerCNPJ ||
+            !respondentData.customerPhone ||
             respondentData.orderAmount <= 0 ||
-            !respondentData.giftNegotiated ||
             !respondentData.representativeName ||
             !respondentData.representativeEmail ||
             !respondentData.customerEmail
