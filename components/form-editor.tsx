@@ -49,12 +49,19 @@ export function FormEditor({ form }: FormEditorProps) {
   })
   const [items, setItems] = useState<FormItem[]>(form.form_items)
   const [editingItem, setEditingItem] = useState<string | null>(null)
+  const [editingItemData, setEditingItemData] = useState<{
+    name: string
+    description: string
+    initialStock: number
+    maxPerResponse: number
+    price: number
+  } | null>(null)
   const [newItem, setNewItem] = useState({
     name: "",
     description: "",
     initialStock: 1,
     maxPerResponse: 1,
-    minSaleValue: 0, // Added minSaleValue field
+    minSaleValue: 0,
   })
 
   const addItem = async () => {
@@ -107,6 +114,7 @@ export function FormEditor({ form }: FormEditorProps) {
 
       setItems(items.map((item) => (item.id === itemId ? { ...item, ...updates } : item)))
       setEditingItem(null)
+      setEditingItemData(null)
     } catch (error) {
       console.error("Erro ao atualizar item:", error)
       alert("Erro ao atualizar item. Tente novamente.")
@@ -167,6 +175,53 @@ export function FormEditor({ form }: FormEditorProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const startEditingItem = (item: FormItem) => {
+    setEditingItem(item.id)
+    setEditingItemData({
+      name: item.name,
+      description: item.description || "",
+      initialStock: item.current_stock,
+      maxPerResponse: item.max_per_response,
+      price: item.price || 0,
+    })
+  }
+
+  const saveEditedItem = async () => {
+    if (!editingItem || !editingItemData) return
+
+    const currentItem = items.find((item) => item.id === editingItem)
+    if (!currentItem) return
+
+    const newCurrentStock = editingItemData.initialStock
+    const updates: Partial<FormItem> = {
+      name: editingItemData.name,
+      description: editingItemData.description || null,
+      current_stock: newCurrentStock,
+      max_per_response: editingItemData.maxPerResponse,
+      price: editingItemData.price,
+    }
+
+    if (newCurrentStock > currentItem.initial_stock) {
+      updates.initial_stock = newCurrentStock
+    }
+
+    console.log("[v0] Atualizando item:", {
+      itemId: editingItem,
+      currentStock: currentItem.current_stock,
+      newCurrentStock,
+      initialStock: currentItem.initial_stock,
+      willUpdateInitialStock: newCurrentStock > currentItem.initial_stock,
+      updates,
+    })
+
+    await updateItem(editingItem, updates)
+  }
+
+  const cancelEditing = () => {
+    setEditingItem(null)
+    setEditingItemData(null)
   }
 
   return (
@@ -230,41 +285,117 @@ export function FormEditor({ form }: FormEditorProps) {
         <CardContent>
           <div className="space-y-3">
             {items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">{item.name}</h4>
-                    <Badge variant="secondary">Estoque: {item.current_stock}</Badge>
-                    <Badge variant="outline">Máx: {item.max_per_response}</Badge>
-                    <Badge variant="default">Mín: R$ {item.price?.toFixed(2) || "0.00"}</Badge>{" "}
-                    {/* Added price badge */}
-                    <Badge variant={item.is_active ? "default" : "secondary"}>
-                      {item.is_active ? "Ativo" : "Inativo"}
-                    </Badge>
+              <div key={item.id} className="p-3 border rounded-lg">
+                {editingItem === item.id ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`edit-name-${item.id}`}>Nome do Item</Label>
+                        <Input
+                          id={`edit-name-${item.id}`}
+                          value={editingItemData?.name || ""}
+                          onChange={(e) =>
+                            setEditingItemData((prev) => (prev ? { ...prev, name: e.target.value } : null))
+                          }
+                          placeholder="Nome do item"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-description-${item.id}`}>Descrição</Label>
+                        <Input
+                          id={`edit-description-${item.id}`}
+                          value={editingItemData?.description || ""}
+                          onChange={(e) =>
+                            setEditingItemData((prev) => (prev ? { ...prev, description: e.target.value } : null))
+                          }
+                          placeholder="Descrição do item"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-stock-${item.id}`}>Estoque Atual</Label>
+                        <Input
+                          id={`edit-stock-${item.id}`}
+                          type="number"
+                          min="0"
+                          value={editingItemData?.initialStock || 0}
+                          onChange={(e) =>
+                            setEditingItemData((prev) =>
+                              prev ? { ...prev, initialStock: Number.parseInt(e.target.value) || 0 } : null,
+                            )
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Estoque inicial: {item.initial_stock} | Atual: {item.current_stock}
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-max-${item.id}`}>Máximo por Resposta</Label>
+                        <Input
+                          id={`edit-max-${item.id}`}
+                          type="number"
+                          min="1"
+                          value={editingItemData?.maxPerResponse || 1}
+                          onChange={(e) =>
+                            setEditingItemData((prev) =>
+                              prev ? { ...prev, maxPerResponse: Number.parseInt(e.target.value) || 1 } : null,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label htmlFor={`edit-price-${item.id}`}>Valor Mínimo de Venda (R$)</Label>
+                        <Input
+                          id={`edit-price-${item.id}`}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editingItemData?.price || 0}
+                          onChange={(e) =>
+                            setEditingItemData((prev) =>
+                              prev ? { ...prev, price: Number.parseFloat(e.target.value) || 0 } : null,
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={cancelEditing}>
+                        Cancelar
+                      </Button>
+                      <Button type="button" onClick={saveEditedItem} disabled={isLoading}>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar
+                      </Button>
+                    </div>
                   </div>
-                  {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingItem(editingItem === item.id ? null : item.id)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => updateItem(item.id, { is_active: !item.is_active })}
-                  >
-                    <Switch checked={item.is_active} />
-                  </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{item.name}</h4>
+                        <Badge variant="secondary">Estoque: {item.current_stock}</Badge>
+                        <Badge variant="outline">Máx: {item.max_per_response}</Badge>
+                        <Badge variant="default">Mín: R$ {item.price?.toFixed(2) || "0.00"}</Badge>
+                        <Badge variant={item.is_active ? "default" : "secondary"}>
+                          {item.is_active ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => startEditingItem(item)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Switch
+                        checked={item.is_active}
+                        onCheckedChange={(checked) => updateItem(item.id, { is_active: checked })}
+                      />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -318,8 +449,6 @@ export function FormEditor({ form }: FormEditorProps) {
               />
             </div>
             <div className="md:col-span-2">
-              {" "}
-              {/* Added minSaleValue field */}
               <Label htmlFor="itemMinSaleValue">Valor Mínimo de Venda (R$)</Label>
               <Input
                 id="itemMinSaleValue"
