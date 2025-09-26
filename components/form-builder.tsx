@@ -115,6 +115,7 @@ export function FormBuilder() {
       if (itemsError) throw itemsError
 
       router.push("/dashboard")
+      router.refresh()
     } catch (error) {
       console.error("Erro ao criar formulário:", error)
       alert("Erro ao criar formulário. Tente novamente.")

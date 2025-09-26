@@ -8,7 +8,7 @@ import Link from "next/link"
 import { MoreHorizontal, Eye, Edit, Share, Trash2, BarChart3 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface Form {
   id: string
@@ -25,9 +25,42 @@ interface FormsListProps {
   forms: Form[]
 }
 
-export function FormsList({ forms }: FormsListProps) {
+export function FormsList({ forms: initialForms }: FormsListProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [forms, setForms] = useState<Form[]>(initialForms)
+
+  useEffect(() => {
+    setForms(initialForms)
+  }, [initialForms])
+
+  const refreshForms = async () => {
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      const { data: updatedForms } = await supabase
+        .from("forms")
+        .select(`
+          *,
+          form_items(count),
+          form_responses(count)
+        `)
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false })
+
+      if (updatedForms) {
+        setForms(updatedForms)
+      }
+    }
+  }
+
+  useEffect(() => {
+    const interval = setInterval(refreshForms, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleDelete = async (formId: string) => {
     if (!confirm("Tem certeza que deseja excluir este formulário? Esta ação não pode ser desfeita.")) {
@@ -40,7 +73,10 @@ export function FormsList({ forms }: FormsListProps) {
     try {
       const { error } = await supabase.from("forms").delete().eq("id", formId)
       if (error) throw error
+
+      setForms(forms.filter((form) => form.id !== formId))
       router.refresh()
+      await refreshForms()
     } catch (error) {
       console.error("Erro ao excluir formulário:", error)
       alert("Erro ao excluir formulário. Tente novamente.")
@@ -88,7 +124,7 @@ export function FormsList({ forms }: FormsListProps) {
                       <span className="sr-only">Abrir menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" side="bottom" sideOffset={8} collisionPadding={16} className="fixed top-20 left-20 z-[9999] bg-white border border-red-500">
+                  <DropdownMenuContent align="end" side="bottom" sideOffset={8} collisionPadding={16}>
                     <DropdownMenuItem asChild>
                       <Link href={`/form/${form.id}`} className="flex items-center">
                         <Eye className="h-4 w-4 mr-2" />
