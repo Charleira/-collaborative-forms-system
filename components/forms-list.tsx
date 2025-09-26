@@ -124,7 +124,7 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                       <span className="sr-only">Abrir menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" side="bottom" sideOffset={8} collisionPadding={16}>
+                  <DropdownMenuContent>
                     <DropdownMenuItem asChild>
                       <Link href={`/form/${form.id}`} className="flex items-center">
                         <Eye className="h-4 w-4 mr-2" />
