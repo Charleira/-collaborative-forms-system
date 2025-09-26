@@ -37,7 +37,7 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `https://v0-collaborative-forms-system.vercel.app/dashboard`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             display_name: displayName || email,
           },
