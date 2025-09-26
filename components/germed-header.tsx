@@ -12,7 +12,7 @@ export function GermedHeader() {
   console.log("[v0] Header render - isAuthenticated:", isAuthenticated, "loading:", loading)
 
   return (
-    <header className="bg-[#1e5a5a] text-white shadow-lg">
+    <header className="bg-[#104c54] text-white shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center space-x-3">

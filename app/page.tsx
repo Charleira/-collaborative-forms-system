@@ -5,7 +5,7 @@ import { FileText, Users, BarChart3, Shield } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1e5a5a] to-[#0f3d3d]">
+    <div className="min-h-screen bg-gradient-to-br from-[#12555E] to-[#0f3d3d]">
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-16">
