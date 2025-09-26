@@ -43,7 +43,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const [respondentData, setRespondentData] = useState({
     customerName: "",
     customerCNPJ: "",
-    customerPhone: "",
     orderAmount: 0,
     representativeName: "",
     representativeEmail: "",
@@ -61,7 +60,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     setRespondentData({
       customerName: "",
       customerCNPJ: "",
-      customerPhone: "",
       orderAmount: 0,
       representativeName: "",
       representativeEmail: "",
@@ -94,13 +92,15 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
   const handleItemToggle = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems({ ...selectedItems, [itemId]: 1 })
+      // Seleciona apenas o item atual, removendo os demais
+      setSelectedItems({ [itemId]: 1 });
     } else {
-      const newSelected = { ...selectedItems }
-      delete newSelected[itemId]
-      setSelectedItems(newSelected)
+      // Desmarca o item
+      const updatedItems = { ...selectedItems };
+      delete updatedItems[itemId];
+      setSelectedItems(updatedItems);
     }
-  }
+  };
 
   const handleQuantityChange = (itemId: string, quantity: number) => {
     const item = availableItems.find((i) => i.id === itemId)
@@ -133,11 +133,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     if (!respondentData.customerCNPJ.trim()) {
       console.log("[v0] Validation failed: customerCNPJ empty")
       alert("Por favor, preencha o CNPJ e/ou Grupo Econômico.")
-      return
-    }
-    if (!respondentData.customerPhone.trim()) {
-      console.log("[v0] Validation failed: customerPhone empty")
-      alert("Por favor, preencha o telefone do cliente.")
       return
     }
     if (respondentData.orderAmount <= 0) {
@@ -184,7 +179,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         form_id: form.id,
         customer_name: respondentData.customerName.trim(),
         cnpj_grupo_economico: respondentData.customerCNPJ.trim(),
-        customer_phone: respondentData.customerPhone.trim(),
         sale_amount: respondentData.orderAmount,
         representante_nome: respondentData.representativeName.trim(),
         representante_email: respondentData.representativeEmail.trim(),
@@ -277,24 +271,16 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             </div>
             <div>
               <Label htmlFor="customerCNPJ">2. Informe o CNPJ e/ou Grupo Econômico *</Label>
-              <Input
-                id="customerCNPJ"
-                value={respondentData.customerCNPJ}
-                onChange={(e) => setRespondentData({ ...respondentData, customerCNPJ: e.target.value })}
-                placeholder="Inclua todos os CNPJs envolvidos na negociação"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="customerPhone">3. Informe o telefone do cliente *</Label>
-              <Input
-                id="customerPhone"
-                type="tel"
-                value={respondentData.customerPhone}
-                onChange={(e) => setRespondentData({ ...respondentData, customerPhone: e.target.value })}
-                placeholder="Telefone para contato"
-                required
-              />
+            <Textarea
+              id="customerCNPJ"
+              value={respondentData.customerCNPJ}
+              onChange={(e) =>
+                setRespondentData({ ...respondentData, customerCNPJ: e.target.value })
+              }
+              placeholder="Inclua os CNPJs ou nomes dos grupos econômicos envolvidos, separados por vírgula ou linha"
+              required
+              rows={4}
+            />
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="orderAmount">4. Informe o valor do pedido negociado com o cliente *</Label>
@@ -369,7 +355,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       {respondentData.orderAmount > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Selecione os Itens</CardTitle>
+            <CardTitle className="text-lg">Selecione o Item</CardTitle>
             <CardDescription>
               {availableItems.length > 0
                 ? `${availableItems.length} item(ns) disponível(eis) para o valor de venda de R$ ${respondentData.orderAmount.toFixed(2)}`
@@ -457,7 +443,6 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             Object.keys(selectedItems).length === 0 ||
             !respondentData.customerName ||
             !respondentData.customerCNPJ ||
-            !respondentData.customerPhone ||
             respondentData.orderAmount <= 0 ||
             !respondentData.representativeName ||
             !respondentData.representativeEmail ||
