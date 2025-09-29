@@ -110,7 +110,7 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
     // top: mesma altura do botão (não embaixo)
     // left: 4px de espaçamento à direita do botão
     const top = rect.top
-    const left = rect.right + 4
+    const left = rect.left - 20
     
     setDropdownPosition({ top, left })
     setOpenDropdown(formId)
