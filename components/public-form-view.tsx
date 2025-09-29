@@ -48,6 +48,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     representativeEmail: "",
     customerEmail: "",
     notes: "",
+    brinde_negociado: "",
   })
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       representativeEmail: "",
       customerEmail: "",
       notes: "",
+      brinde_negociado: "",
     })
     setSelectedItems({})
     setAvailableItems([])
@@ -173,6 +175,11 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     console.log("[v0] All validations passed, proceeding with submission")
     setIsLoading(true)
     const supabase = createClient()
+    
+    const brindeNegociado = Object.keys(selectedItems).map((itemId) => {
+      const item = availableItems.find((i) => i.id === itemId)
+      return item?.name || itemId // usa o nome se encontrar, senão mantém o ID
+    })
 
     try {
       const formData = {
@@ -185,6 +192,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         seller_name: respondentData.representativeName.trim(), // Always use representative name
         customer_email: respondentData.customerEmail.trim(),
         notes: respondentData.notes?.trim() || null,
+        brinde_negociado: JSON.stringify(brindeNegociado),
       }
 
       console.log("[v0] Form data being sent:", formData)
