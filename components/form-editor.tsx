@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { QuestionEditor, type CustomQuestion } from "@/components/question-editor"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -32,6 +33,7 @@ interface Form {
   is_public: boolean
   is_active: boolean
   form_items: FormItem[]
+  custom_questions?: CustomQuestion[]
 }
 
 interface FormEditorProps {
@@ -48,6 +50,7 @@ export function FormEditor({ form }: FormEditorProps) {
     isActive: form.is_active,
   })
   const [items, setItems] = useState<FormItem[]>(form.form_items)
+  const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>(form.custom_questions || [])
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [editingItemData, setEditingItemData] = useState<{
     name: string
@@ -163,6 +166,7 @@ export function FormEditor({ form }: FormEditorProps) {
           description: formData.description || null,
           is_public: formData.isPublic,
           is_active: formData.isActive,
+          custom_questions: customQuestions,
         })
         .eq("id", form.id)
 
@@ -476,6 +480,8 @@ export function FormEditor({ form }: FormEditorProps) {
           </Button>
         </CardContent>
       </Card>
+
+      <QuestionEditor questions={customQuestions} onChange={setCustomQuestions} />
 
       {/* Submit */}
       <div className="flex justify-end gap-4">

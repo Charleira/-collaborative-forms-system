@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -13,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Save } from "lucide-react"
+import { QuestionEditor, type CustomQuestion } from "@/components/question-editor"
 
 interface FormItem {
   id: string
@@ -33,6 +33,7 @@ export function FormBuilder() {
     isActive: true,
   })
   const [items, setItems] = useState<FormItem[]>([])
+  const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([])
   const [newItem, setNewItem] = useState({
     name: "",
     description: "",
@@ -93,6 +94,7 @@ export function FormBuilder() {
           is_public: formData.isPublic,
           is_active: formData.isActive,
           owner_id: user.id,
+          custom_questions: customQuestions,
         })
         .select()
         .single()
@@ -249,6 +251,9 @@ export function FormBuilder() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Custom Questions Editor */}
+      <QuestionEditor questions={customQuestions} onChange={setCustomQuestions} />
 
       {/* Items List */}
       {items.length > 0 && (
