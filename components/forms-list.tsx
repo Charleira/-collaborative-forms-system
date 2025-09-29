@@ -144,7 +144,6 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                 </Badge>
                 {/* 
                   DropdownMenu com estado controlado para garantir que apenas um menu esteja aberto por vez
-                  e posicionamento customizado baseado na posição do botão clicado
                 */}
                 <DropdownMenu 
                   open={openDropdown === form.id}
