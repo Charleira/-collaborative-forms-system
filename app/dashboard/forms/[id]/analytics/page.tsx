@@ -127,7 +127,7 @@ export default async function AnalyticsPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost">
-            <Link href={`/form/${id}`}>
+            <Link href={`/dashboard`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
             </Link>

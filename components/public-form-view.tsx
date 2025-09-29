@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -13,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Send, AlertCircle } from "lucide-react"
+import { CustomQuestionsRenderer } from "@/components/custom-questions-renderer"
+import type { CustomQuestion } from "@/components/question-editor"
 
 interface FormItem {
   id: string
@@ -28,6 +29,7 @@ interface Form {
   title: string
   description: string | null
   created_at: string
+  custom_questions?: CustomQuestion[]
 }
 
 interface PublicFormViewProps {
@@ -40,6 +42,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({})
   const [availableItems, setAvailableItems] = useState<FormItem[]>([])
+  const [customAnswers, setCustomAnswers] = useState<Record<string, any>>({})
   const [respondentData, setRespondentData] = useState({
     customerName: "",
     customerCNPJ: "",
@@ -70,6 +73,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     })
     setSelectedItems({})
     setAvailableItems([])
+    setCustomAnswers({})
     console.log("[v0] Form reset completed")
   }
 
@@ -95,14 +99,14 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const handleItemToggle = (itemId: string, checked: boolean) => {
     if (checked) {
       // Seleciona apenas o item atual, removendo os demais
-      setSelectedItems({ [itemId]: 1 });
+      setSelectedItems({ [itemId]: 1 })
     } else {
       // Desmarca o item
-      const updatedItems = { ...selectedItems };
-      delete updatedItems[itemId];
-      setSelectedItems(updatedItems);
+      const updatedItems = { ...selectedItems }
+      delete updatedItems[itemId]
+      setSelectedItems(updatedItems)
     }
-  };
+  }
 
   const handleQuantityChange = (itemId: string, quantity: number) => {
     const item = availableItems.find((i) => i.id === itemId)
@@ -126,6 +130,18 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
     console.log("[v0] handleSubmit called")
     console.log("[v0] Current respondentData:", respondentData)
+    console.log("[v0] Custom answers:", customAnswers)
+
+    const customQuestions = form.custom_questions || []
+    for (const question of customQuestions) {
+      if (question.required) {
+        const answer = customAnswers[question.id]
+        if (!answer || (Array.isArray(answer) && answer.length === 0) || answer.toString().trim() === "") {
+          alert(`Por favor, responda a pergunta obrigatória: ${question.label}`)
+          return
+        }
+      }
+    }
 
     if (!respondentData.customerName.trim()) {
       console.log("[v0] Validation failed: customerName empty")
@@ -175,7 +191,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     console.log("[v0] All validations passed, proceeding with submission")
     setIsLoading(true)
     const supabase = createClient()
-    
+
     const brindeNegociado = Object.keys(selectedItems).map((itemId) => {
       const item = availableItems.find((i) => i.id === itemId)
       return item?.name || itemId // usa o nome se encontrar, senão mantém o ID
@@ -193,6 +209,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         customer_email: respondentData.customerEmail.trim(),
         notes: respondentData.notes?.trim() || null,
         brinde_negociado: JSON.stringify(brindeNegociado),
+        custom_answers: customAnswers,
       }
 
       console.log("[v0] Form data being sent:", formData)
@@ -279,16 +296,14 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             </div>
             <div>
               <Label htmlFor="customerCNPJ">2. Informe o CNPJ e/ou Grupo Econômico *</Label>
-            <Textarea
-              id="customerCNPJ"
-              value={respondentData.customerCNPJ}
-              onChange={(e) =>
-                setRespondentData({ ...respondentData, customerCNPJ: e.target.value })
-              }
-              placeholder="Inclua os CNPJs ou nomes dos grupos econômicos envolvidos, separados por vírgula ou linha"
-              required
-              rows={4}
-            />
+              <Textarea
+                id="customerCNPJ"
+                value={respondentData.customerCNPJ}
+                onChange={(e) => setRespondentData({ ...respondentData, customerCNPJ: e.target.value })}
+                placeholder="Inclua os CNPJs ou nomes dos grupos econômicos envolvidos, separados por vírgula ou linha"
+                required
+                rows={4}
+              />
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="orderAmount">4. Informe o valor do pedido negociado com o cliente *</Label>
@@ -358,6 +373,24 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Informações Adicionais */}
+      {form.custom_questions && form.custom_questions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Informações Adicionais</CardTitle>
+            <CardDescription>Responda às perguntas personalizadas do formulário</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CustomQuestionsRenderer
+              questions={form.custom_questions}
+              answers={customAnswers}
+              onChange={setCustomAnswers}
+              disabled={isLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Items Selection */}
       {respondentData.orderAmount > 0 && (
