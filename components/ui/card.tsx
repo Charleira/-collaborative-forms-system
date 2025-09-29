@@ -38,15 +38,19 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
+type CardDescriptionProps = React.HTMLAttributes<HTMLParagraphElement>
+function CardDescription({className,children,...props}: CardDescriptionProps) {
   return (
-    <div
+    <p
       data-slot="card-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-muted-foreground text-sm whitespace-break-spaces', className)}
       {...props}
-    />
+    >
+      {children}
+    </p>
   )
 }
+
 
 function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
