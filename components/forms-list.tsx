@@ -8,7 +8,7 @@ import Link from "next/link"
 import { MoreHorizontal, Eye, Edit, Share, Trash2, BarChart3 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 interface Form {
   id: string
@@ -29,6 +29,12 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [forms, setForms] = useState<Form[]>(initialForms)
+  
+  // Estado para controlar qual dropdown está aberto (apenas um por vez)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  
+  // Estado para armazenar a posição calculada do dropdown
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
 
   useEffect(() => {
     setForms(initialForms)
@@ -91,6 +97,25 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
     alert("Link copiado para a área de transferência!")
   }
 
+  /**
+   * Função para calcular e definir a posição do dropdown menu
+   * Solução implementada para resolver o problema de posicionamento do menu
+   * que aparecia no canto superior esquerdo em vez de próximo aos 3 pontinhos
+   */
+  const handleDropdownOpen = (formId: string, event: React.MouseEvent) => {
+    const button = event.currentTarget as HTMLElement
+    const rect = button.getBoundingClientRect()
+    
+    // Calcular posição: ao lado direito dos 3 pontinhos
+    // top: mesma altura do botão (não embaixo)
+    // left: 4px de espaçamento à direita do botão
+    const top = rect.top
+    const left = rect.right + 4
+    
+    setDropdownPosition({ top, left })
+    setOpenDropdown(formId)
+  }
+
   if (forms.length === 0) {
     return (
       <div className="text-center py-12">
@@ -117,14 +142,47 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                 <Badge variant={form.is_public ? "outline" : "secondary"}>
                   {form.is_public ? "Público" : "Privado"}
                 </Badge>
-                <DropdownMenu>
+                {/* 
+                  DropdownMenu com estado controlado para garantir que apenas um menu esteja aberto por vez
+                  e posicionamento customizado baseado na posição do botão clicado
+                */}
+                <DropdownMenu 
+                  open={openDropdown === form.id}
+                  onOpenChange={(open) => {
+                    // Fechar dropdown e limpar posição quando o menu é fechado
+                    if (!open) {
+                      setOpenDropdown(null);
+                      setDropdownPosition(null);
+                    }
+                  }}
+                >
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={(e) => {
+                        handleDropdownOpen(form.id, e);
+                      }}
+                    >
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">Abrir menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent>
+                  {}
+                  <DropdownMenuContent 
+                    align="end" 
+                    side="bottom" 
+                    sideOffset={4}
+                    collisionPadding={8}
+                    avoidCollisions={true}
+                    style={dropdownPosition ? {
+                      position: "fixed",
+                      top: `${dropdownPosition.top}px`,
+                      left: `${dropdownPosition.left}px`,
+                      zIndex: 9999,
+                    } : undefined}
+                  >
                     <DropdownMenuItem asChild>
                       <Link href={`/form/${form.id}`} className="flex items-center">
                         <Eye className="h-4 w-4 mr-2" />
