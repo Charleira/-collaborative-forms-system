@@ -169,7 +169,11 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                       <span className="sr-only">Abrir menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  {}
+                  {/* 
+                    DropdownMenuContent com posicionamento customizado
+                    Usa position: fixed com coordenadas calculadas dinamicamente
+                    para garantir que o menu apareça próximo aos 3 pontinhos clicados
+                  */}
                   <DropdownMenuContent 
                     align="end" 
                     side="bottom" 
