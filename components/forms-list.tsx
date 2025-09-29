@@ -162,6 +162,7 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                       size="sm" 
                       className="h-8 w-8 p-0"
                       onClick={(e) => {
+                        // Calcular posição do dropdown baseada no botão clicado
                         handleDropdownOpen(form.id, e);
                       }}
                     >
@@ -169,7 +170,11 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                       <span className="sr-only">Abrir menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  {}
+                  {/* 
+                    DropdownMenuContent com posicionamento customizado
+                    Usa position: fixed com coordenadas calculadas dinamicamente
+                    para garantir que o menu apareça próximo aos 3 pontinhos clicados
+                  */}
                   <DropdownMenuContent 
                     align="end" 
                     side="bottom" 
