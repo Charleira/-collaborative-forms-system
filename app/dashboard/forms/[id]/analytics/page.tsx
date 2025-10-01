@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ArrowLeft, Users, Package, TrendingDown, Calendar, DollarSign } from 'lucide-react'
 import { ExportResponsesButton } from '@/components/exportExcelButtom' // <— botão do Excel (cliente)
-
+import FormResponsesList from '@/components/forms-response-list'
 /* =========================
    Tipos locais (TS)
    ========================= */
@@ -247,79 +247,20 @@ export default async function AnalyticsPage({
           )}
         </CardContent>
       </Card>
+    {/* Respostas + Botão Excel */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Todas as Respostas</CardTitle>
+          <CardDescription>Gerencie todas as respostas recebidas</CardDescription>
+        </div>
+        <ExportResponsesButton formId={id} />
+      </CardHeader>
 
-      {/* Respostas Recentes + Botão Excel */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Respostas Recentes</CardTitle>
-            <CardDescription>Últimas 10 respostas recebidas</CardDescription>
-          </div>
-          {/* Botão Excel — baixa TODAS as respostas do formulário */}
-          <ExportResponsesButton formId={id} />
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {recentResponses.length > 0 ? (
-            recentResponses.map((response) => (
-              <div key={response.id} className="rounded-md border p-3 space-y-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Cliente</div>
-                    <div className="font-medium">
-                      {response.customer_name ?? 'Não informado'}
-                    </div>
-                    <div className="text-sm">
-                      {response.customer_email ?? ''} {response.customer_phone ?? ''}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-xs text-muted-foreground">Vendedor</div>
-                    <div className="font-medium">
-                      {response.seller_name ?? 'Não informado'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-sm">
-                  Valor da venda: <strong>R$ {(response.sale_amount ?? 0).toFixed(2)}</strong>
-                </div>
-
-                <div className="text-sm">
-                  <div className="text-xs text-muted-foreground mb-1">Itens solicitados:</div>
-                  {response.response_items && response.response_items.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {response.response_items.map((responseItem) => (
-                        <li key={responseItem.id}>
-                          {responseItem.form_items?.name ?? 'Item desconhecido'} (
-                          {responseItem.quantity})
-                          {responseItem.form_items?.price != null && (
-                            <> — R$ {(responseItem.form_items.price * responseItem.quantity).toFixed(2)}</>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="text-muted-foreground">Nenhum item encontrado</div>
-                  )}
-                </div>
-
-                {response.notes && (
-                  <div className="italic text-sm text-muted-foreground">"{response.notes}"</div>
-                )}
-
-                <div className="text-xs text-muted-foreground">
-                  {new Date(response.created_at).toLocaleDateString('pt-BR')}{' '}
-                  {new Date(response.created_at).toLocaleTimeString('pt-BR')}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-sm text-muted-foreground">Nenhuma resposta ainda</div>
-          )}
-        </CardContent>
-      </Card>
+      <CardContent>
+        <FormResponsesList responses={typedForm.form_responses} formId={id} />
+      </CardContent>
+    </Card>
     </div>
   )
 }
