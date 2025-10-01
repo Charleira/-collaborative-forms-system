@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { MoreHorizontal, Eye, Edit, Share, Trash2, BarChart3 } from "lucide-react"
+import { duplicate } from '@/components/duplicate'
+import { MoreHorizontal, Eye, Edit, Share, Trash2, BarChart3, ForwardIcon, PlusIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
@@ -215,6 +216,22 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       {isDeleting === form.id ? "Excluindo..." : "Excluir"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        const newId = await duplicate(form.id);
+                        // Se quiser apenas atualizar a lista:
+                        // router.refresh();
+                        // Ou redirecionar para edição do novo formulário:
+                        // router.push(`/forms/${newId}/edit`);
+                      } catch (err) {
+                        console.error(err);
+                        alert('Erro ao duplicar formulário. Tente novamente.');
+                      }
+                     }}>
+
+                      <PlusIcon className="h-4 w-4 mr-2"/>
+                       Duplicar
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

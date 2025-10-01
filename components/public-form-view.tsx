@@ -210,23 +210,22 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     try {
       const formData = {
         form_id: form.id,
-        customer_name: respondentData.customerName.trim(),
+        nome_cliente: respondentData.customerName.trim(),
         cnpj_grupo_economico: respondentData.customerCNPJ.trim(),
-        sale_amount: respondentData.orderAmount,
-        representante_nome: respondentData.representativeName.trim(),
+        valor_venda: respondentData.orderAmount,
         representante_email: respondentData.representativeEmail.trim(),
-        seller_name: respondentData.representativeName.trim(), // Always use representative name
-        customer_email: respondentData.customerEmail.trim(),
-        notes: respondentData.notes?.trim() ?? null,
+        nome_vendedor: respondentData.representativeName.trim(), // Always use representative name
+        cliente_email: respondentData.customerEmail.trim(),
+        observações: respondentData.notes?.trim() ?? null,
         brinde_negociado: JSON.stringify(brindeNegociado),
-        custom_answers: customAnswers,
+        respostas_personalizadas: customAnswers,
       }
 
       console.log("[v0] Form data being sent:", formData)
-      console.log("[v0] Representative name:", formData.representante_nome)
-      console.log("[v0] Seller name (should be same as representative):", formData.seller_name)
+      console.log("[v0] Representative name:", formData.nome_vendedor)
+      console.log("[v0] Seller name (should be same as representative):", formData.nome_vendedor)
 
-      if (!formData.seller_name || formData.seller_name.trim() === "") {
+      if (!formData.nome_vendedor || formData.nome_vendedor.trim() === "") {
         console.error("[v0] CRITICAL ERROR: seller_name is empty!")
         throw new Error("Nome do representante não pode estar vazio")
       }
