@@ -47,7 +47,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({})
   const [availableItems, setAvailableItems] = useState<FormItem[]>([])
-  const [customAnswers, setCustomAnswers] = useState<Record<string, any>>({})
+  const [respostas_personalizadas, setrespostas_personalizadas] = useState<Record<string, any>>({})
   const [respondentData, setRespondentData] = useState({
     customerName: "",
     customerCNPJ: "",
@@ -57,6 +57,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     customerEmail: "",
     notes: "",
     brinde_negociado: "",
+    respostas_personalizadas: "",
   })
 
   useEffect(() => {
@@ -75,10 +76,11 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       customerEmail: "",
       notes: "",
       brinde_negociado: "",
+      respostas_personalizadas: "",
     })
     setSelectedItems({})
     setAvailableItems([])
-    setCustomAnswers({})
+    setrespostas_personalizadas({})
     console.log("[v0] Form reset completed")
   }
 
@@ -134,12 +136,12 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     e.preventDefault()
     console.log("[v0] handleSubmit called")
     console.log("[v0] Current respondentData:", respondentData)
-    console.log("[v0] Custom answers:", customAnswers)
+    console.log("[v0] Custom answers:", respostas_personalizadas)
 
     const customQuestions = form.custom_questions ?? []
     for (const question of customQuestions) {
       if (question.required) {
-        const answer = customAnswers[question.id]
+        const answer = respostas_personalizadas[question.id]
         if (
           !answer ||
           (Array.isArray(answer) && answer.length === 0) ||
@@ -218,7 +220,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         cliente_email: respondentData.customerEmail.trim(),
         observações: respondentData.notes?.trim() ?? null,
         brinde_negociado: JSON.stringify(brindeNegociado),
-        respostas_personalizadas: customAnswers,
+        respostas_personalizadas: respostas_personalizadas,
       }
 
       console.log("[v0] Form data being sent:", formData)
@@ -617,8 +619,8 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
           <CardContent>
             <CustomQuestionsRenderer
               questions={form.custom_questions}
-              answers={customAnswers}
-              onChange={setCustomAnswers}
+              answers={respostas_personalizadas}
+              onChange={setrespostas_personalizadas}
               disabled={isLoading}
             />
           </CardContent>
