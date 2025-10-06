@@ -259,24 +259,23 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         throw itemsError
       }
 
-          
     for (const [itemId, quantity] of Object.entries(selectedItems)) {
       const { data: itemData, error: fetchError } = await supabase
-        .from("form_items") // substitua pelo nome correto da tabela de itens
+        .from("form_items") // substitua pelo nome correto da tabela
         .select("current_stock")
         .eq("id", itemId)
         .single()
 
-      if (fetchError || !itemData) {
+      if (fetchError || !itemData || typeof itemData.current_stock !== "number") {
         console.error(`[v0] Erro ao buscar estoque do item ${itemId}:`, fetchError)
         alert(`Erro ao buscar estoque do item ${itemId}.`)
         return
       }
 
-      const novoEstoque = itemData.current_stock - quantity
+      const novoEstoque = Math.max(0, itemData.current_stock - quantity)
 
       const { error: updateError } = await supabase
-        .from("form_items") // substitua pelo nome correto da tabela de itens
+        .from("form_items")
         .update({ current_stock: novoEstoque })
         .eq("id", itemId)
 
@@ -286,6 +285,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         return
       }
     }
+
 
       console.log("[v0] Response items created successfully")
       console.log("[v0] Navigating to success page...")
