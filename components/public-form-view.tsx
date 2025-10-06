@@ -47,7 +47,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({})
   const [availableItems, setAvailableItems] = useState<FormItem[]>([])
-  const [customAnswers, setCustomAnswers] = useState<Record<string, any>>({})
+  const [respostas_personalizadas, setrespostas_personalizadas] = useState<Record<string, any>>({})
   const [respondentData, setRespondentData] = useState({
     customerName: "",
     customerCNPJ: "",
@@ -57,6 +57,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     customerEmail: "",
     notes: "",
     brinde_negociado: "",
+    respostas_personalizadas: "",
   })
 
   useEffect(() => {
@@ -75,10 +76,11 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       customerEmail: "",
       notes: "",
       brinde_negociado: "",
+      respostas_personalizadas: "",
     })
     setSelectedItems({})
     setAvailableItems([])
-    setCustomAnswers({})
+    setrespostas_personalizadas({})
     console.log("[v0] Form reset completed")
   }
 
@@ -134,12 +136,12 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     e.preventDefault()
     console.log("[v0] handleSubmit called")
     console.log("[v0] Current respondentData:", respondentData)
-    console.log("[v0] Custom answers:", customAnswers)
+    console.log("[v0] Custom answers:", respostas_personalizadas)
 
     const customQuestions = form.custom_questions ?? []
     for (const question of customQuestions) {
       if (question.required) {
-        const answer = customAnswers[question.id]
+        const answer = respostas_personalizadas[question.id]
         if (
           !answer ||
           (Array.isArray(answer) && answer.length === 0) ||
@@ -210,23 +212,22 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     try {
       const formData = {
         form_id: form.id,
-        customer_name: respondentData.customerName.trim(),
+        nome_cliente: respondentData.customerName.trim(),
         cnpj_grupo_economico: respondentData.customerCNPJ.trim(),
-        sale_amount: respondentData.orderAmount,
-        representante_nome: respondentData.representativeName.trim(),
+        valor_venda: respondentData.orderAmount,
         representante_email: respondentData.representativeEmail.trim(),
-        seller_name: respondentData.representativeName.trim(), // Always use representative name
-        customer_email: respondentData.customerEmail.trim(),
-        notes: respondentData.notes?.trim() ?? null,
+        nome_vendedor: respondentData.representativeName.trim(), // Always use representative name
+        cliente_email: respondentData.customerEmail.trim(),
+        observações: respondentData.notes?.trim() ?? null,
         brinde_negociado: JSON.stringify(brindeNegociado),
-        custom_answers: customAnswers,
+        respostas_personalizadas: respostas_personalizadas,
       }
 
       console.log("[v0] Form data being sent:", formData)
-      console.log("[v0] Representative name:", formData.representante_nome)
-      console.log("[v0] Seller name (should be same as representative):", formData.seller_name)
+      console.log("[v0] Representative name:", formData.nome_vendedor)
+      console.log("[v0] Seller name (should be same as representative):", formData.nome_vendedor)
 
-      if (!formData.seller_name || formData.seller_name.trim() === "") {
+      if (!formData.nome_vendedor || formData.nome_vendedor.trim() === "") {
         console.error("[v0] CRITICAL ERROR: seller_name is empty!")
         throw new Error("Nome do representante não pode estar vazio")
       }
@@ -618,8 +619,8 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
           <CardContent>
             <CustomQuestionsRenderer
               questions={form.custom_questions}
-              answers={customAnswers}
-              onChange={setCustomAnswers}
+              answers={respostas_personalizadas}
+              onChange={setrespostas_personalizadas}
               disabled={isLoading}
             />
           </CardContent>

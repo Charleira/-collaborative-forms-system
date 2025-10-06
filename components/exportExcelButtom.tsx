@@ -350,19 +350,15 @@ export function ExportResponsesButton({
     const FIXED_COLS_ORDER = [
       'id',
       'form_id',
-      'respondent_name',
-      'respondent_email',
-      'notes',
-      'created_at',
-      'customer_name',
-      'customer_email',
-      'seller_name',
-      'sale_amount',
+      'nome_cliente',
       'cnpj_grupo_economico',
-      'representante_nome',
+      'valor_venda',
+      'vendedor_nome',
       'representante_email',
       'cliente_email',
+      'observações',
       'brinde_negociado',
+      'respostas_personalizadas',
     ] as const
 
     const ensureUniqueHeader = ensureUniqueHeaderFactory()

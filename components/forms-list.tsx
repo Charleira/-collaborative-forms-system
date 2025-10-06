@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { MoreHorizontal, Eye, Edit, Share, Trash2, BarChart3 } from "lucide-react"
+import { duplicate } from '@/components/duplicate'
+import { MoreHorizontal, Eye, Edit, Share, Trash2, BarChart3, ForwardIcon, PlusIcon, QrCodeIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
+import { QRCodeCustomizer } from "@/components/qrcode"
 
 interface Form {
   id: string
@@ -33,6 +35,10 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
   // Estado para controlar qual dropdown está aberto (apenas um por vez)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   
+  
+// ✅ Estado para o QRCodeCustomizer
+  const [qrOpen, setQrOpen] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   // Estado para armazenar a posição calculada do dropdown
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
 
@@ -215,6 +221,32 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       {isDeleting === form.id ? "Excluindo..." : "Excluir"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        const newId = await duplicate(form.id);
+                        // Se quiser apenas atualizar a lista:
+                        // router.refresh();
+                        // Ou redirecionar para edição do novo formulário:
+                        // router.push(`/forms/${newId}/edit`);
+                      } catch (err) {
+                        console.error(err);
+                        alert('Erro ao duplicar formulário. Tente novamente.');
+                      }
+                     }}>
+
+                    <PlusIcon className="h-4 w-4 mr-2"/>
+                       Duplicar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onSelect={() => {
+                          setSelectedFormId(form.id);
+                          setQrOpen(true);
+                        }}
+                        className="flex items-center"
+                      >
+                        <QrCodeIcon className="h-4 w-4 mr-2" />
+                        Gerar QRCODE
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
