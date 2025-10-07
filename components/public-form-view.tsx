@@ -16,11 +16,6 @@ import { Send, AlertCircle, HelpCircle } from "lucide-react"
 import { CustomQuestionsRenderer } from "@/components/custom-questions-renderer"
 import type { CustomQuestion } from "@/components/question-editor"
 
-// --- Driver.js (tour) ---
-
-import { driver } from "driver.js"
-import type { DriveStep } from "driver.js" // ✅ importa o tipo
-import "driver.js/dist/driver.css"
 
 interface FormItem {
   id: string
@@ -273,200 +268,10 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     }
   }
 
-  // --------------- TUTORIAL (driver.js) ---------------
-
-  const TOUR_KEY = `public-form-${form.id}-lastTourAt`
-  const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
-
-  function buildTourSteps(): DriveStep[] {
-  const hasCustomQuestions =
-    !!(form.custom_questions && form.custom_questions.length > 0)
-
-  const hasItemsSection =
-    typeof window !== "undefined" && !!document.querySelector("#items-section")
-
-  const steps: DriveStep[] = []
-
-  steps.push({
-    element: "#customerName",
-    popover: {
-      title: "Nome do cliente",
-      description: "Informe o nome completo do cliente.",
-      side: "bottom",
-      align: "start",
-    },
-  })
-
-  steps.push({
-    element: "#customerCNPJ",
-    popover: {
-      title: "CNPJ / Grupo Econômico",
-      description:
-        "Inclua os CNPJs ou nomes dos grupos econômicos envolvidos (um por linha ou separados por vírgula).",
-      side: "bottom",
-      align: "start",
-    },
-  })
-
-  steps.push({
-    element: "#orderAmount",
-    popover: {
-      title: "Valor do pedido negociado",
-      description:
-        "Defina o valor negociado. Os itens elegíveis aparecerão de acordo com este valor.",
-      side: "bottom",
-      align: "start",
-    },
-  })
-
-  if (hasCustomQuestions) {
-    steps.push({
-      element: "#custom-questions",
-      popover: {
-        title: "Informações adicionais",
-        description:
-          "Responda às perguntas personalizadas do formulário (se houver).",
-        side: "top",
-        align: "start",
-      },
-    })
-  }
-
-  if (hasItemsSection) {
-    steps.push({
-      element: "#items-section",
-      popover: {
-        title: "Seleção de itens",
-        description:
-          "Selecione o item e, quando permitido, ajuste a quantidade. O total não pode exceder o valor do pedido.",
-        side: "top",
-        align: "start",
-      },
-    })
-  } else {
-    steps.push({
-      element: "#orderAmount",
-      popover: {
-        title: "Seleção de itens",
-        description:
-          "Após informar o valor do pedido, a seção de itens aparecerá logo abaixo.",
-        side: "bottom",
-        align: "start",
-      },
-    })
-  }
-
-  steps.push(
-    {
-      element: "#representativeName",
-      popover: {
-        title: "Representante responsável",
-        description: "Nome do representante responsável pelo cliente.",
-        side: "bottom",
-        align: "start",
-      },
-    },
-    {
-      element: "#representativeEmail",
-      popover: {
-        title: "E-mail do representante",
-        description: "O representante será incluído automaticamente no circuito de e-mails.",
-        side: "bottom",
-        align: "start",
-      },
-    },
-    {
-      element: "#customerEmail",
-      popover: {
-        title: "E-mail do cliente",
-        description: "O cliente receberá o código de resgate do brinde neste e-mail.",
-        side: "bottom",
-        align: "start",
-      },
-    },
-    {
-      element: "#notes",
-      popover: {
-        title: "Observações",
-        description: "Inclua aqui qualquer observação adicional, se necessário.",
-        side: "top",
-        align: "start",
-      },
-    },
-    {
-      element: "#submit-btn",
-      popover: {
-        title: "Enviar resposta",
-        description: "Após preencher tudo e escolher o item, clique para enviar.",
-        side: "top",
-        align: "end",
-      },
-    },
-    {
-      element: "#open-tour",
-      popover: {
-        title: "Precisa rever?",
-        description:
-          "Use este botão (?) no topo direito para reabrir o tutorial a qualquer momento.",
-        side: "left",
-        align: "center",
-      },
-    },
-  )
-
-  return steps
-}
-
-
-  const startTour = () => {
-    const d = driver({
-      showProgress: true,
-      allowClose: true,
-      overlayClickBehavior: "nextStep",
-      smoothScroll: true,
-      overlayOpacity: 0.5,
-      stagePadding: 8,
-      popoverClass: "driverjs-shadcn",
-      steps: buildTourSteps(),
-    })
-    d.drive()
-    try {
-      localStorage.setItem(TOUR_KEY, String(Date.now()))
-    } catch {}
-  }
-
-  useEffect(() => {
-    try {
-      const last = Number(localStorage.getItem(TOUR_KEY) || 0)
-      const now = Date.now()
-      if (!last || now - last > TWELVE_HOURS_MS) {
-        setTimeout(() => startTour(), 300) // garante DOM pronto
-      }
-    } catch {
-      // se localStorage indisponível, apenas ignora
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // --------------- /TUTORIAL ---------------
+  
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Botão flutuante: abre tutorial */}
-      <Button
-        id="open-tour"
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={startTour}
-        className="fixed top-4 right-4 z-[60] rounded-full"
-        aria-label="Abrir tutorial"
-        title="Abrir tutorial"
-      >
-        <HelpCircle className="h-5 w-5" />
-        <span className="sr-only">Abrir tutorial</span>
-      </Button>
-
       {/* Form Header */}
       <Card>
         <CardHeader>
@@ -517,7 +322,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
             <div className="md:col-span-2">
               <Label htmlFor="orderAmount">
-                4. Informe o valor do pedido negociado com o cliente *
+                3. Informe o valor do pedido negociado com o cliente *
               </Label>
               <Input 
               id="orderAmount"
@@ -548,7 +353,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
             <div>
               <Label htmlFor="representativeName">
-                5. Informe o nome do representante responsável pelo cliente *
+                4. Informe o nome do representante responsável pelo cliente *
               </Label>
               <Input
                 id="representativeName"
@@ -563,7 +368,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
 
             <div>
               <Label htmlFor="representativeEmail">
-                6. Informe o email do representante responsável pelo cliente *
+                5. Informe o email do representante responsável pelo cliente *
               </Label>
               <Input
                 id="representativeEmail"
@@ -581,7 +386,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
             </div>
 
             <div className="md:col-span-2">
-              <Label htmlFor="customerEmail">7. Informe o e-mail do cliente *</Label>
+              <Label htmlFor="customerEmail">6. Informe o e-mail do cliente *</Label>
               <Input
                 id="customerEmail"
                 type="email"

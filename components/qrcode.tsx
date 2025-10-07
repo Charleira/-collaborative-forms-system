@@ -257,7 +257,7 @@ export function QRCodeCustomizer({
                   <RangeControl
                     label={`Tamanho (preview): ${size}px`}
                     min={180}
-                    max={560}
+                    max={400}
                     value={size}
                     step={10}
                     onChange={setSize}
@@ -272,10 +272,45 @@ export function QRCodeCustomizer({
                   />
                 </div>
 
+                
+
+                {/* Export */}
+                <div
+                    style={{
+                      display: 'flex',
+                      gap: 12,
+                      alignItems: 'center',
+                      borderTop: '1px solid #e5e7eb',
+                      paddingTop: 10,
+                    }}
+                  >
+                  <Switch.Root
+                    id="switch-2x"
+                    checked={hiRes2x}
+                    onCheckedChange={setHiRes2x}
+                    className="
+                      relative h-6 w-11 rounded-full transition-colors
+                      bg-gray-300 data-[state=checked]:bg-emerald-500
+                    "
+                  >
+                    <Switch.Thumb
+                      className="
+                        block h-5 w-5 rounded-full bg-white shadow
+                        translate-x-1 transition-transform will-change-transform
+                        data-[state=checked]:translate-x-5
+                      "
+                    />
+                  </Switch.Root>
+
+                  <label htmlFor="switch-2x" className="ml-2 select-none">
+                    Exportar em alta resolução (2×)
+                  </label>
+                </div>
+
                 {/* Correção de erro */}
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <span style={{ fontSize: 12, color: '#374151', width: 140 }}>
-                    Correção de erro
+                    Estilo do QrCode
                   </span>
                   <Select.Root
                     value={ecLevel}
@@ -306,133 +341,6 @@ export function QRCodeCustomizer({
                       ))}
                     </Select.Content>
                   </Select.Root>
-                  <span style={{ fontSize: 12, color: '#6b7280' }}>
-                    (Use “H” se for usar logo)
-                  </span>
-                </div>
-
-                {/* Logo */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gap: 10,
-                    borderTop: '1px solid #e5e7eb',
-                    paddingTop: 10,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Switch.Root
-                      checked={withLogo}
-                      onCheckedChange={(v) => setWithLogo(Boolean(v))}
-                      style={switchRootStyle}
-                      id="switch-logo"
-                    >
-                      <Switch.Thumb style={switchThumbStyle} />
-                    </Switch.Root>
-                    <label htmlFor="switch-logo" style={{ fontWeight: 500 }}>
-                      Usar logo da empresa
-                    </label>
-                  </div>
-
-                  {withLogo && (
-                    <>
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) onSelectLogoFile(f);
-                          }}
-                        />
-                        <RangeControl
-                          label={`Tamanho da logo: ${(logoScale * 100).toFixed(0)}%`}
-                          min={10}
-                          max={35}
-                          value={Math.round(logoScale * 100)}
-                          step={1}
-                          onChange={(v) => setLogoScale(v / 100)}
-                          compact
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <Switch.Root
-                            checked={logoCentered}
-                            onCheckedChange={(v) => {
-                              const val = Boolean(v);
-                              setLogoCentered(val);
-                              setLogoCorner(val ? 'center' : 'tl');
-                            }}
-                            style={switchRootStyle}
-                            id="switch-center"
-                          >
-                            <Switch.Thumb style={switchThumbStyle} />
-                          </Switch.Root>
-                          <label htmlFor="switch-center">Centralizar logo</label>
-                        </div>
-
-                        {!logoCentered && (
-                          <>
-                            <span style={{ fontSize: 12, color: '#374151' }}>
-                              Posição:
-                            </span>
-                            <Select.Root
-                              value={logoCorner}
-                              onValueChange={(v) => setLogoCorner(v as Corner)}
-                            >
-                              <Select.Trigger style={selectStyle}>
-                                <Select.Value />
-                              </Select.Trigger>
-                              <Select.Content
-                                style={{
-                                  background: 'white',
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: 8,
-                                  padding: 4,
-                                }}
-                              >
-                                <Select.Item value="tl" style={selectItemStyle}>
-                                  Superior esquerdo
-                                </Select.Item>
-                                <Select.Item value="tr" style={selectItemStyle}>
-                                  Superior direito
-                                </Select.Item>
-                                <Select.Item value="bl" style={selectItemStyle}>
-                                  Inferior esquerdo
-                                </Select.Item>
-                                <Select.Item value="br" style={selectItemStyle}>
-                                  Inferior direito
-                                </Select.Item>
-                              </Select.Content>
-                            </Select.Root>
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Export */}
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 12,
-                    alignItems: 'center',
-                    borderTop: '1px solid #e5e7eb',
-                    paddingTop: 10,
-                  }}
-                >
-                  <Switch.Root
-                    checked={hiRes2x}
-                    onCheckedChange={(v) => setHiRes2x(Boolean(v))}
-                    style={switchRootStyle}
-                    id="switch-2x"
-                  >
-                    <Switch.Thumb style={switchThumbStyle} />
-                  </Switch.Root>
-                  <label htmlFor="switch-2x">Exportar em alta resolução (2×)</label>
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
