@@ -268,6 +268,12 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
     }
   }
 
+const brl = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  minimumFractionDigits: 2,
+});
+
   
 
   return (
@@ -324,30 +330,32 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
               <Label htmlFor="orderAmount">
                 3. Informe o valor do pedido negociado com o cliente *
               </Label>
-              <Input 
-              id="orderAmount"
-              type="number"
-              min="0"
-              step="0.01"
-              value={Number.isFinite(respondentData.orderAmount) ? respondentData.orderAmount : 0}
-              onFocus={(e) => {
-                if (respondentData.orderAmount === 0) {
-                  e.currentTarget.select(); // seleciona o "0" para ser substituído
+              <Input
+                id="orderAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={Number.isFinite(respondentData.orderAmount) ? respondentData.orderAmount : 0}
+                onFocus={(e) => {
+                  if (respondentData.orderAmount === 0) {
+                    e.currentTarget.select();
+                  }
+                }}
+                onChange={(e) =>
+                  setRespondentData({
+                    ...respondentData,
+                    // permite digitar com vírgula e converte para número
+                    orderAmount: Number.parseFloat(e.target.value.replace(',', '.')) || 0,
+                  })
                 }
-              }}
-              onChange={(e) =>
-                setRespondentData({
-                  ...respondentData,
-                  orderAmount: Number.parseFloat(e.target.value.replace(",", ".")) || 0,
-                })
-              }
-              required
+                required
               />
               {respondentData.orderAmount > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Apenas itens com valor mínimo igual ou inferior a R$ {respondentData.orderAmount.toFixed(2)} estarão
-                  disponíveis
-                </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Apenas itens com valor mínimo igual ou inferior a{' '}
+                {brl.format(Number.isFinite(respondentData.orderAmount) ? respondentData.orderAmount : 0)}{' '}
+                estarão disponíveis
+              </p>
               )}
             </div>
 
@@ -477,7 +485,14 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="secondary">Disponível: {item.current_stock}</Badge>
                           <Badge variant="outline">Máx por pessoa: {item.max_per_response}</Badge>
-                          <Badge variant="default">Valor mín: R$ {item.price.toFixed(2)}</Badge>
+                          <Badge variant="default">
+                          Mín:{" "}
+                            {new Intl.NumberFormat("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                              minimumFractionDigits: 2,
+                            }).format(item.price ?? 0)}
+                          </Badge>
                         </div>
 
                         {isSelected && maxQuantity > 1 && (

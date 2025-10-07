@@ -352,7 +352,7 @@ export function FormEditor({ form }: FormEditorProps) {
                           id={`edit-price-${item.id}`}
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="001"
                           value={editingItemData?.price || 0}
                           onChange={(e) =>
                             setEditingItemData((prev) =>
@@ -379,7 +379,14 @@ export function FormEditor({ form }: FormEditorProps) {
                         <h4 className="font-medium">{item.name}</h4>
                         <Badge variant="secondary">Estoque: {item.current_stock}</Badge>
                         <Badge variant="outline">Máx: {item.max_per_response}</Badge>
-                        <Badge variant="default">Mín: R$ {item.price?.toFixed(2) || "0.00"}</Badge>
+                        <Badge variant="default">
+                        Mín:{" "}
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                            minimumFractionDigits: 2,
+                          }).format(item.price ?? 0)}
+                        </Badge>
                         <Badge variant={item.is_active ? "default" : "secondary"}>
                           {item.is_active ? "Ativo" : "Inativo"}
                         </Badge>
