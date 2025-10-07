@@ -239,15 +239,26 @@ export function FormsList({ forms: initialForms }: FormsListProps) {
                        Duplicar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        onSelect={() => {
-                          setSelectedFormId(form.id);
-                          setQrOpen(true);
-                        }}
-                        className="flex items-center"
+                      onSelect={(e) => {
+                        // Evita comportamento padrão do Radix (p. ex. focos indesejados)
+                        e.preventDefault();
+                        setSelectedFormId(form.id);
+                        setQrOpen(true);
+                      }}
+                      className="flex items-center"
                       >
-                        <QrCodeIcon className="h-4 w-4 mr-2" />
-                        Gerar QRCODE
-                    </DropdownMenuItem>
+                      <QrCodeIcon className="h-4 w-4 mr-2" />
+                      Gerar QrCode
+                  </DropdownMenuItem>
+                    
+                  {qrOpen && selectedFormId && (
+                    <QRCodeCustomizer
+                      formId={selectedFormId}
+                      open={qrOpen}
+                      onOpenChange={setQrOpen}
+                    />
+                  )}
+
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
