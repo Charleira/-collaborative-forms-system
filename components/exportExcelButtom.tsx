@@ -356,7 +356,7 @@ export function ExportResponsesButton({
       'vendedor_nome',
       'representante_email',
       'cliente_email',
-      'observações',
+      'observacoes',
       'brinde_negociado',
       'respostas_personalizadas',
     ] as const

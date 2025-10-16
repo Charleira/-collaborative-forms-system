@@ -213,7 +213,7 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
         representante_email: respondentData.representativeEmail.trim(),
         nome_vendedor: respondentData.representativeName.trim(), // Always use representative name
         cliente_email: respondentData.customerEmail.trim(),
-        observações: respondentData.notes?.trim() ?? null,
+        observacoes: respondentData.notes?.trim() ?? null,
         brinde_negociado: JSON.stringify(brindeNegociado),
         respostas_personalizadas: respostas_personalizadas,
       }

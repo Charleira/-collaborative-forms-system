@@ -80,7 +80,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     { header: 'Cliente - Telefone', key: 'customer_phone', width: 20 },
     { header: 'Vendedor', key: 'seller_name', width: 24 },
     { header: 'Valor da Venda (R$)', key: 'sale_amount', width: 22 },
-    { header: 'Observações', key: 'notes', width: 40 }
+    { header: 'Observacoes', key: 'notes', width: 40 }
   ]
   wsResp.getRow(1).font = { bold: true }
 
