@@ -258,7 +258,7 @@ export default async function AnalyticsPage({
       </CardHeader>
 
       <CardContent>
-        <FormResponsesList responses={typedForm.form_responses} formId={id} />
+        <FormResponsesList formId={id} />
       </CardContent>
     </Card>
     </div>

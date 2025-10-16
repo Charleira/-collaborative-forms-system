@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -26,24 +26,57 @@ type FormResponse = {
 }
 
 export default function FormResponsesList({
-  responses,
   formId,
 }: {
-  responses: FormResponse[]
   formId: string
 }) {
+  const [responses, setResponses] = useState<FormResponse[]>([])
+  const [loadingList, setLoadingList] = useState<boolean>(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
   const [selected, setSelected] = useState<string[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loadingDelete, setLoadingDelete] = useState(false)
 
   const toggleSelect = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    )
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
+  // === Carrega respostas da API ===
+  const fetchResponses = async (signal?: AbortSignal) => {
+    try {
+      setLoadingList(true)
+      setLoadError(null)
+
+      const res = await fetch(`/api/forms/${formId}/responses`, {
+        method: 'GET',
+        cache: 'no-store',
+        signal,
+      })
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || 'Falha ao buscar respostas')
+      }
+
+      const data: FormResponse[] = await res.json()
+      setResponses(data)
+    } catch (err) {
+      console.error(err)
+      setLoadError('Não foi possível carregar as respostas.')
+    } finally {
+      setLoadingList(false)
+    }
+  }
+
+  useEffect(() => {
+    const ac = new AbortController()
+    fetchResponses(ac.signal)
+    return () => ac.abort()
+  }, [formId])
+
   const handleDelete = async () => {
-    setLoading(true)
+    setLoadingDelete(true)
     try {
       const res = await fetch(`/api/forms/${formId}/responses/delete`, {
         method: 'POST',
@@ -55,14 +88,36 @@ export default function FormResponsesList({
 
       toast.success('Respostas deletadas e estoque restaurado!')
       setSelected([])
-      location.reload() // recarrega para atualizar lista
+      await fetchResponses() // recarrega a lista sem dar reload na página
     } catch (err) {
       console.error(err)
       toast.error('Não foi possível deletar')
     } finally {
-      setLoading(false)
+      setLoadingDelete(false)
       setIsDialogOpen(false)
     }
+  }
+
+  // === UI ===
+  if (loadingList) {
+    return (
+      <div className="space-y-2">
+        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="text-sm text-destructive">
+        {loadError}{' '}
+        <Button variant="link" size="sm" onClick={() => fetchResponses()}>
+          Tentar novamente
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -92,17 +147,27 @@ export default function FormResponsesList({
                 onCheckedChange={() => toggleSelect(response.id)}
               />
               <div>
-                <div className="font-medium">{response.customer_name ?? 'Não informado'}</div>
+                <div className="font-medium">
+                  {response.customer_name && response.customer_name.trim() !== '' ? response.customer_name : 'Não informado'}
+                </div>
+
                 <div className="text-sm text-muted-foreground">
-                  {response.customer_email ?? ''} {response.customer_phone ?? ''}
+                  {[response.customer_email, response.customer_phone].filter(Boolean).join(' • ') || '—'}
                 </div>
+
                 <div className="text-sm">
-                  Vendedor: {response.seller_name ?? 'Não informado'}
+                  Vendedor: {response.seller_name && response.seller_name.trim() !== '' ? response.seller_name : 'Não informado'}
                 </div>
+
                 <div className="text-sm">
-                  Valor da venda: <strong>R$ {(response.sale_amount ?? 0).toFixed(2)}</strong>
+                  Valor da venda:{' '}
+                  <strong>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+                      .format(response.sale_amount ?? 0)}
+                  </strong>
                 </div>
-                {response.response_items.length > 0 && (
+
+                {response.response_items?.length > 0 && (
                   <ul className="list-disc pl-5 text-sm mt-1">
                     {response.response_items.map((item) => (
                       <li key={item.id}>
@@ -111,11 +176,13 @@ export default function FormResponsesList({
                     ))}
                   </ul>
                 )}
+
                 {response.notes && (
                   <div className="italic text-sm text-muted-foreground mt-1">
                     "{response.notes}"
                   </div>
                 )}
+
                 <div className="text-xs text-muted-foreground mt-1">
                   {new Date(response.created_at).toLocaleDateString('pt-BR')}{' '}
                   {new Date(response.created_at).toLocaleTimeString('pt-BR')}
@@ -144,9 +211,9 @@ export default function FormResponsesList({
             <Button
               variant="destructive"
               onClick={handleDelete}
-              disabled={loading}
+              disabled={loadingDelete}
             >
-              Confirmar
+              {loadingDelete ? 'Excluindo...' : 'Confirmar'}
             </Button>
           </DialogFooter>
         </DialogContent>
