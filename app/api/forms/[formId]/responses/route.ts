@@ -37,7 +37,6 @@ export async function GET(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
   // Se você quiser garantir o shape exatamente como seu componente tipa:
   const normalized = (data ?? []).map((r) => ({
     id: r.id,

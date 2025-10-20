@@ -204,59 +204,134 @@ export function PublicFormView({ form, items }: PublicFormViewProps) {
       return item?.name ?? itemId // usa o nome se encontrar, senão mantém o ID
     })
 
-    try {
-      const formData = {
-        form_id: form.id,
-        nome_cliente: respondentData.customerName.trim(),
-        cnpj_grupo_economico: respondentData.customerCNPJ.trim(),
-        valor_venda: respondentData.orderAmount,
-        representante_email: respondentData.representativeEmail.trim(),
-        nome_vendedor: respondentData.representativeName.trim(), // Always use representative name
-        cliente_email: respondentData.customerEmail.trim(),
-        observacoes: respondentData.notes?.trim() ?? null,
-        brinde_negociado: JSON.stringify(brindeNegociado),
-        respostas_personalizadas: respostas_personalizadas,
-      }
+    
+try {
+  // 🔔 Função simples de notify (troque pelo seu sistema de toast, se houver)
+  const notify = (message: string) => {
+    // Ex.: useToast(), Radix Toast, sonner, etc. Aqui fica o fallback:
+    alert(message)
+  }
 
-      console.log("[v0] Form data being sent:", formData)
-      console.log("[v0] Representative name:", formData.nome_vendedor)
-      console.log("[v0] Seller name (should be same as representative):", formData.nome_vendedor)
+  const formData = {
+    form_id: form.id,
+    nome_cliente: respondentData.customerName.trim(),
+    cnpj_grupo_economico: respondentData.customerCNPJ.trim(),
+    valor_venda: respondentData.orderAmount,
+    representante_email: respondentData.representativeEmail.trim(),
+    nome_vendedor: respondentData.representativeName.trim(), // Always use representative name
+    cliente_email: respondentData.customerEmail.trim(),
+    observacoes: respondentData.notes?.trim() ?? null,
+    brinde_negociado: JSON.stringify(brindeNegociado),
+    respostas_personalizadas: respostas_personalizadas,
+  }
 
-      if (!formData.nome_vendedor || formData.nome_vendedor.trim() === "") {
-        console.error("[v0] CRITICAL ERROR: seller_name is empty!")
-        throw new Error("Nome do representante não pode estar vazio")
-      }
+  console.log("[v0] Form data being sent:", formData)
+  console.log("[v0] Representative name:", formData.nome_vendedor)
+  console.log("[v0] Seller name (should be same as representative):", formData.nome_vendedor)
 
-      // Create form response
-      const { data: response, error: responseError } = await supabase
-        .from("form_responses")
-        .insert(formData)
-        .select()
-        .single()
+  if (!formData.nome_vendedor || formData.nome_vendedor.trim() === "") {
+    console.error("[v0] CRITICAL ERROR: seller_name is empty!")
+    throw new Error("Nome do representante não pode estar vazio")
+  }
 
-      if (responseError) {
-        console.error("[v0] Database error:", responseError)
-        throw responseError
-      }
+  // =========================================
+  // ✅ VALIDAÇÃO DE ESTOQUE *ANTES* DO ENVIO
+  // =========================================
+  const itemEntries = Object.entries(selectedItems) // [ [itemId, qty], ... ]
+  const itemIds = itemEntries.map(([id]) => id)
 
-      console.log("[v0] Form response created successfully:", response)
+  // Segurança extra: se, por algum motivo, não houver itens selecionados, interrompe.
+  if (itemIds.length === 0) {
+    notify("Nenhum item selecionado. Atualize a página e tente novamente.")
+    return
+  }
 
-      // Create response items
-      const responseItems = Object.entries(selectedItems).map(([itemId, quantity]) => ({
-        response_id: response!.id,
-        form_item_id: itemId,
-        quantity,
-      }))
+  // Buscar estoque atual e regra de máximo direto do BD (fonte de verdade)
+  const { data: latestItems, error: stockError } = await supabase
+    .from("form_items")
+    .select("id, name, current_stock, max_per_response")
+    .in("id", itemIds)
 
-      const { error: itemsError } = await supabase.from("response_items").insert(responseItems)
-      if (itemsError) {
-        console.error("[v0] Items error:", itemsError)
-        throw itemsError
-      } 
-      console.log("[v0] Response items created successfully")
-      console.log("[v0] Navigating to success page...")
-      router.push(`/form/${form.id}/success`)
-    } catch (error) {
+  if (stockError) {
+    console.error("[v0] Stock check error:", stockError)
+    throw stockError
+  }
+
+  // Se algum item não veio do BD, considere indisponível (dados ficaram defasados)
+  if (!latestItems || latestItems.length !== itemIds.length) {
+    notify(
+      "Item indisponível no momento. O estoque foi atualizado. " +
+      "Por favor, atualize a página e preencha o formulário novamente."
+    )
+    return
+  }
+
+  // Validar cada item: estoque suficiente e respeito ao max_per_response
+  const firstBreach = latestItems.find((it) => {
+    const requested = selectedItems[it.id] ?? 0
+    return requested > it.current_stock || requested > it.max_per_response
+  })
+
+  if (firstBreach) {
+    const requested = selectedItems[firstBreach.id]
+    const reasons: string[] = []
+    if (requested > firstBreach.current_stock) reasons.push("estoque insuficiente")
+    if (requested > firstBreach.max_per_response)
+      reasons.push(`acima do máximo por pessoa (${firstBreach.max_per_response})`)
+
+    console.warn("[v0] Stock validation failed for:", {
+      id: firstBreach.id,
+      name: firstBreach.name,
+      requested,
+      current_stock: firstBreach.current_stock,
+      max_per_response: firstBreach.max_per_response,
+      reasons,
+    })
+
+    notify(
+      `O item "${firstBreach.name ?? firstBreach.id}" está indisponível no momento (${reasons.join(
+        " e "
+      )}). ` +
+      "Por favor, atualize a página e preencha o formulário novamente."
+    )
+    return
+  }
+  // =========================================
+  // Fim da validação de estoque
+  // =========================================
+
+  // Create form response
+  const { data: response, error: responseError } = await supabase
+    .from("form_responses")
+    .insert(formData)
+    .select()
+    .single()
+
+  if (responseError) {
+    console.error("[v0] Database error:", responseError)
+    throw responseError
+  }
+
+  console.log("[v0] Form response created successfully:", response)
+
+  // Create response items
+  const responseItems = Object.entries(selectedItems).map(([itemId, quantity]) => ({
+    response_id: response!.id,
+    form_item_id: itemId,
+    quantity,
+  }))
+
+  const { error: itemsError } = await supabase.from("response_items").insert(responseItems)
+  if (itemsError) {
+    console.error("[v0] Items error:", itemsError)
+    throw itemsError
+  }
+
+  console.log("[v0] Response items created successfully")
+  console.log("[v0] Navigating to success page...")
+  router.push(`/form/${form.id}/success`)
+}
+catch (error) {
       console.error("[v0] Error submitting form:", error)
       alert(
         `Erro ao enviar resposta: ${
