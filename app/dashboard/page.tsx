@@ -58,12 +58,13 @@ export default async function DashboardPage() {
 
           <Card className="border-l-4 border-l-[#7cb342]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Respostas</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Respostas dos Formulários Ativos</CardTitle>
               <Users className="h-4 w-4 text-[#7cb342]" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-[#7cb342]">
-                {forms?.reduce((acc, form) => acc + (form.form_responses?.[0]?.count || 0), 0) || 0}
+                {forms?.filter((form) => form.is_active).reduce((acc, form) => acc + (form.form_responses?.[0]?.count || 0), 0) || 0}
+
               </div>
             </CardContent>
           </Card>
