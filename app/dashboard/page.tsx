@@ -58,7 +58,7 @@ export default async function DashboardPage() {
 
           <Card className="border-l-4 border-l-[#7cb342]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Respostas</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Respostas dos Formulários Ativos</CardTitle>
               <Users className="h-4 w-4 text-[#7cb342]" />
             </CardHeader>
             <CardContent>
