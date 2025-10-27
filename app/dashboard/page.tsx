@@ -63,7 +63,8 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-[#7cb342]">
-                {forms?.reduce((acc, form) => acc + (form.form_responses?.[0]?.count || 0), 0) || 0}
+                {forms?.filter((form) => form.is_active).reduce((acc, form) => acc + (form.form_responses?.[0]?.count || 0), 0) || 0}
+
               </div>
             </CardContent>
           </Card>
